@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.arijit.habits.R
 
@@ -24,6 +25,8 @@ class ReminderReceiver : BroadcastReceiver() {
             )
             notificationManager.createNotificationChannel(channel)
         }
+
+        Log.d("ReminderReceiver", "Alarm triggered for: $habitName")
 
         val notification = NotificationCompat.Builder(context, channelId)
             .setContentTitle("Reminder")

@@ -6,16 +6,16 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.arijit.habits.R
-import com.arijit.habits.models.CalendarDate
+import com.arijit.habits.models.DateTaskStatus
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 class CalendarAdapter(
-    private var dates: List<CalendarDate>,
-    private val onDateClick: (CalendarDate) -> Unit
+    private var dates: List<DateTaskStatus>,
+    private val onDateClick: (DateTaskStatus) -> Unit
 ): RecyclerView.Adapter<CalendarAdapter.CalendarViewHolder>() {
 
-    fun updateData(newData: List<CalendarDate>) {
+    fun updateData(newData: List<DateTaskStatus>) {
         dates = newData
         notifyDataSetChanged()
     }
@@ -40,8 +40,9 @@ class CalendarAdapter(
         holder.tvDay.text = dayFormat.format(item.date)
         holder.tvDate.text = dateFormat.format(item.date)
 
+        val isComplete = item.totalTasks > 0 && item.finishedTasks == item.totalTasks
         holder.statusDot.setBackgroundResource(
-            if (item.isComplete) R.drawable.dot_green else R.drawable.dot_grey
+            if (isComplete) R.drawable.dot_green else R.drawable.dot_grey
         )
 
         holder.itemView.isEnabled = true

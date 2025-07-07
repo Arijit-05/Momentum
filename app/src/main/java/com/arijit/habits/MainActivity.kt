@@ -1,11 +1,11 @@
 package com.arijit.habits
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.app.TimePickerDialog
 import android.content.Intent
-import android.graphics.ColorMatrix
-import android.graphics.ColorMatrixColorFilter
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -31,10 +31,11 @@ import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import android.util.Log
+import androidx.annotation.RequiresPermission
 import com.airbnb.lottie.LottieAnimationView
-import com.arijit.habits.models.CalendarDate
 import com.arijit.habits.models.Habit
 import java.util.Locale
+import com.arijit.habits.models.DateTaskStatus
 
 class MainActivity : AppCompatActivity() {
     private lateinit var titleTxt: TextView
@@ -119,14 +120,24 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 if (habit.completionDates.contains(dateStr)) {
-                    habit.completionDates.remove(dateStr)
+                    // Show confirmation dialog before undoing
+                    AlertDialog.Builder(this)
+                        .setTitle("Undo Habit")
+                        .setMessage("Are you sure you want to undo this habit for today?")
+                        .setPositiveButton("Yes") { _, _ ->
+                            habit.completionDates.remove(dateStr)
+                            updateHabit(habit)
+                            val date = dateFormat.parse(dateStr)
+                            onCalendarDateSelected(DateTaskStatus(date!!, 0, 0))
+                        }
+                        .setNegativeButton("No", null)
+                        .show()
                 } else {
                     habit.completionDates.add(dateStr)
+                    updateHabit(habit)
+                    val date = dateFormat.parse(dateStr)
+                    onCalendarDateSelected(DateTaskStatus(date!!, 0, 0))
                 }
-
-                updateHabit(habit)
-                val date = dateFormat.parse(dateStr)
-                onCalendarDateSelected(CalendarDate(date!!, false))
             },
             onLongPress = { habit -> showEditDeleteDialog(habit) }
         )
@@ -159,12 +170,12 @@ class MainActivity : AppCompatActivity() {
 
                 selectedDateString?.let {
                     val date = dateFormat.parse(it)
-                    onCalendarDateSelected(CalendarDate(date!!, false))
+                    onCalendarDateSelected(DateTaskStatus(date!!, 0, 0))
                 }
             }
 
         val today = Calendar.getInstance().time
-        onCalendarDateSelected(CalendarDate(today, false))
+        onCalendarDateSelected(DateTaskStatus(today, 0, 0))
     }
 
     private fun fetchallHabitsFromFirebase() {
@@ -219,9 +230,9 @@ class MainActivity : AppCompatActivity() {
             }
             .start()
     }
-    private fun generateCalendarData(): List<CalendarDate> {
+    private fun generateCalendarData(): List<DateTaskStatus> {
         val calendar = Calendar.getInstance()
-        val list = mutableListOf<CalendarDate>()
+        val list = mutableListOf<DateTaskStatus>()
         calendar.add(Calendar.DAY_OF_YEAR, -10)
 
         for (i in 0..10) {
@@ -237,15 +248,20 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            val isComplete = createdHabits.isNotEmpty() && createdHabits.all { it.completionDates.contains(dateString) }
-            list.add(CalendarDate(date, isComplete))
+            val totalHabits = createdHabits.size
+            val habitsCompleted = createdHabits.count { habit ->
+                habit.completionDates.contains(dateString)
+            }
+
+            Log.d("CalendarDebug", "date=$dateString, finished=$habitsCompleted, total=$totalHabits")
+            list.add(DateTaskStatus(date, habitsCompleted, totalHabits))
             calendar.add(Calendar.DAY_OF_YEAR, 1)
         }
 
         updateStreak(list)
         return list
     }
-    private fun onCalendarDateSelected(selectedDate: CalendarDate) {
+    private fun onCalendarDateSelected(selectedDate: DateTaskStatus) {
         val selectedDateStr = dateFormat.format(selectedDate.date)
         selectedDateString = selectedDateStr
         val noTasksText = findViewById<TextView>(R.id.no_tasks_text)
@@ -267,7 +283,9 @@ class MainActivity : AppCompatActivity() {
     }
     private fun updateallHabitsForDate(filtered: List<Habit>) {
         filteredallHabits.clear()
-        filteredallHabits.addAll(filtered)
+        // Sort: undone habits first, done habits last
+        val sorted = filtered.sortedBy { it.isDone }
+        filteredallHabits.addAll(sorted)
         habitAdapter.notifyDataSetChanged()
 
         val finished = filtered.count { it.isDone }
@@ -275,21 +293,27 @@ class MainActivity : AppCompatActivity() {
         finishedTasks.text = finished.toString()
         totalTasks.text = total.toString()
     }
-    private fun updateStreak(calendarData: List<CalendarDate>) {
+    private fun updateStreak(calendarData: List<DateTaskStatus>) {
         var streak = 0
         val today = dateFormat.format(Calendar.getInstance().time)
         for (date in calendarData.reversed()) {
             val dateString = dateFormat.format(date.date)
             if (dateString > today) continue
-            if (date.isComplete) streak++ else break
+            val isComplete = date.totalTasks > 0 && date.finishedTasks == date.totalTasks
+            if (isComplete) streak++ else break
         }
         streakDay.text = streak.toString()
 
-//        if (streakDay.text.toString() == "0") {
-//            lottieFire.pauseAnimation()
-//        } else {
-//            lottieFire.resumeAnimation()
-//        }
+        if (streakDay.text.toString() == "0") {
+            findViewById<TextView>(R.id.days_txt).text = "days"
+            lottieFire.pauseAnimation()
+        } else if (streakDay.text.toString() == "1") {
+            findViewById<TextView>(R.id.days_txt).text = "day"
+            lottieFire.resumeAnimation()
+        } else {
+            findViewById<TextView>(R.id.days_txt).text = "days"
+            lottieFire.resumeAnimation()
+        }
     }
     private fun showAddHabitDialog() {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_habit, null)
@@ -328,12 +352,14 @@ class MainActivity : AppCompatActivity() {
                     return@setPositiveButton
                 }
 
+                val creationDateStr = dateFormat.format(Calendar.getInstance().time)
                 val habit = Habit(
                     name = name,
                     emoji = emoji,
                     isDone = false,
                     hasReminder = hasReminder,
-                    reminderTime = if (hasReminder) time else ""
+                    reminderTime = if (hasReminder) time else "",
+                    creationDate = creationDateStr
                 )
 
                 saveHabitToFirebase(habit)
@@ -341,6 +367,7 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Cancel", null)
             .show()
     }
+    @SuppressLint("ScheduleExactAlarm")
     private fun saveHabitToFirebase(habit: Habit) {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         val db = FirebaseFirestore.getInstance()
@@ -349,7 +376,7 @@ class MainActivity : AppCompatActivity() {
         habit.id = docRef.id
 
         docRef.set(habit)
-            .addOnSuccessListener {
+            .addOnSuccessListener @androidx.annotation.RequiresPermission(android.Manifest.permission.SCHEDULE_EXACT_ALARM) {
                 scheduleHabitReminder(habit)
                 Toast.makeText(this, "Habit added", Toast.LENGTH_SHORT).show()
             }
@@ -357,6 +384,8 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Failed to add habit", Toast.LENGTH_SHORT).show()
             }
     }
+    @SuppressLint("ScheduleExactAlarm")
+    @RequiresPermission(Manifest.permission.SCHEDULE_EXACT_ALARM)
     private fun scheduleHabitReminder(habit: Habit) {
         if (!habit.hasReminder || habit.reminderTime.isEmpty()) return
 
@@ -382,12 +411,17 @@ class MainActivity : AppCompatActivity() {
         )
 
         val alarmManager = getSystemService(ALARM_SERVICE) as AlarmManager
-        alarmManager.setRepeating(
+        alarmManager.setExactAndAllowWhileIdle(
             AlarmManager.RTC_WAKEUP,
             calendar.timeInMillis,
-            AlarmManager.INTERVAL_DAY,
             pendingIntent
         )
+//        alarmManager.setRepeating(
+//            AlarmManager.RTC_WAKEUP,
+//            calendar.timeInMillis,
+//            AlarmManager.INTERVAL_DAY,
+//            pendingIntent
+//        )
     }
     private fun updateHabit(habit: Habit) {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
@@ -407,7 +441,7 @@ class MainActivity : AppCompatActivity() {
                     val cal = Calendar.getInstance()
                     val date = try { dateFormat.parse(dateStr) } catch (e: Exception) { null }
                     if (date != null) {
-                        onCalendarDateSelected(CalendarDate(date, false))
+                        onCalendarDateSelected(DateTaskStatus(date, 0, 0))
                     }
                 }
             }
