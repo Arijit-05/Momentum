@@ -31,7 +31,7 @@ class ReminderReceiver : BroadcastReceiver() {
         val notification = NotificationCompat.Builder(context, channelId)
             .setContentTitle("Reminder")
             .setContentText("Time to complete: $habitName")
-            .setSmallIcon(R.drawable.add) // Replace with your own icon
+            .setSmallIcon(R.drawable.add)
             .setAutoCancel(true)
             .build()
 

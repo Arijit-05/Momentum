@@ -27,7 +27,7 @@
                 android:fontFamily="@font/montserrat_regular"
                 android:gravity="center"
                 android:hint="✒️"
-                android:inputType="text"
+                android:inputType="textShortMessage"
                 android:maxLength="2"
                 android:textSize="15sp" />
 

@@ -12,20 +12,38 @@ import java.util.Locale
 
 class CalendarAdapter(
     private var dates: List<DateTaskStatus>,
-    private val onDateClick: (DateTaskStatus) -> Unit
+    private val onDateClick: (DateTaskStatus) -> Unit,
+    private var selectedDateString: String? = null
 ): RecyclerView.Adapter<CalendarAdapter.CalendarViewHolder>() {
+
+    companion object {
+        private const val VIEW_TYPE_NORMAL = 0
+        private const val VIEW_TYPE_SELECTED = 1
+    }
 
     fun updateData(newData: List<DateTaskStatus>) {
         dates = newData
         notifyDataSetChanged()
     }
 
+    fun updateSelectedDate(selected: String?) {
+        selectedDateString = selected
+        notifyDataSetChanged()
+    }
+
+    override fun getItemViewType(position: Int): Int {
+        val item = dates[position]
+        val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+        val itemDateString = dateFormat.format(item.date)
+        return if (itemDateString == selectedDateString) VIEW_TYPE_SELECTED else VIEW_TYPE_NORMAL
+    }
+
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int
     ): CalendarViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_calendar_date, parent, false)
+        val layoutId = if (viewType == VIEW_TYPE_SELECTED) R.layout.item_calendar_date_selected else R.layout.item_calendar_date
+        val view = LayoutInflater.from(parent.context).inflate(layoutId, parent, false)
         return CalendarViewHolder(view)
     }
 

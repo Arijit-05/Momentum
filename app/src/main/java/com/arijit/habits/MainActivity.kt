@@ -1,9 +1,5 @@
 package com.arijit.habits
 
-import android.Manifest
-import android.annotation.SuppressLint
-import android.app.AlarmManager
-import android.app.PendingIntent
 import android.app.TimePickerDialog
 import android.content.Intent
 import android.os.Bundle
@@ -23,7 +19,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.arijit.habits.utils.CalendarAdapter
 import com.arijit.habits.utils.HabitAdapter
-import com.arijit.habits.utils.ReminderReceiver
 import com.arijit.habits.utils.Vibration
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.firebase.auth.FirebaseAuth
@@ -31,11 +26,14 @@ import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import android.util.Log
-import androidx.annotation.RequiresPermission
 import com.airbnb.lottie.LottieAnimationView
 import com.arijit.habits.models.Habit
 import java.util.Locale
 import com.arijit.habits.models.DateTaskStatus
+import com.arijit.habits.utils.ReminderUtils
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.core.app.ActivityCompat
 
 class MainActivity : AppCompatActivity() {
     private lateinit var titleTxt: TextView
@@ -51,11 +49,18 @@ class MainActivity : AppCompatActivity() {
     private lateinit var habitAdapter: HabitAdapter
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
     private var selectedDateString: String? = null
+    private lateinit var calendarAdapter: CalendarAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+        // Request notification permission for Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1001)
+            }
+        }
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
@@ -100,10 +105,12 @@ class MainActivity : AppCompatActivity() {
 
         val recycler = findViewById<RecyclerView>(R.id.calendar_recycler)
         val calendarData = generateCalendarData()
-        val calendarAdapter = CalendarAdapter(calendarData) { selectedDate ->
+        calendarAdapter = CalendarAdapter(calendarData, { selectedDate ->
+            val selectedDateStr = dateFormat.format(selectedDate.date)
+            calendarAdapter.updateSelectedDate(selectedDateStr)
             onCalendarDateSelected(selectedDate)
-        }
-
+            Vibration.vibrate(this, 50)
+        }, selectedDateString)
         recycler.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         recycler.adapter = calendarAdapter
         recycler.scrollToPosition(calendarData.size - 1)
@@ -167,40 +174,15 @@ class MainActivity : AppCompatActivity() {
 
                 val calendarData = generateCalendarData()
                 calendarAdapter.updateData(calendarData)
-
                 selectedDateString?.let {
                     val date = dateFormat.parse(it)
+                    calendarAdapter.updateSelectedDate(it)
                     onCalendarDateSelected(DateTaskStatus(date!!, 0, 0))
                 }
             }
 
         val today = Calendar.getInstance().time
         onCalendarDateSelected(DateTaskStatus(today, 0, 0))
-    }
-
-    private fun fetchallHabitsFromFirebase() {
-        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        val db = FirebaseFirestore.getInstance()
-
-        db.collection("users").document(userId)
-            .collection("allHabits")
-            .get()
-            .addOnSuccessListener { querySnapshot ->
-                allHabits.clear()
-
-                val fetched = querySnapshot.documents.mapNotNull { doc ->
-                    doc.toObject(Habit::class.java)?.apply {
-                        id = doc.id
-                    }
-                }
-
-                val sorted = fetched.sortedBy { it.isDone }
-                allHabits.addAll(sorted)
-                habitAdapter.notifyDataSetChanged()
-            }
-            .addOnFailureListener {
-                Toast.makeText(this, "Failed to fetch allHabits", Toast.LENGTH_SHORT).show()
-            }
     }
     private fun animateTitleSequence(titleTxt: TextView, name: String) {
         titleTxt.animate()
@@ -264,6 +246,7 @@ class MainActivity : AppCompatActivity() {
     private fun onCalendarDateSelected(selectedDate: DateTaskStatus) {
         val selectedDateStr = dateFormat.format(selectedDate.date)
         selectedDateString = selectedDateStr
+        calendarAdapter.updateSelectedDate(selectedDateStr)
         val noTasksText = findViewById<TextView>(R.id.no_tasks_text)
 
         val filtered = allHabits.filter { habit ->
@@ -278,10 +261,10 @@ class MainActivity : AppCompatActivity() {
             habit.copy(isDone = habit.completionDates.contains(selectedDateStr))
         }
 
-        updateallHabitsForDate(filtered)
+        updateAllHabitsForDate(filtered)
         noTasksText.visibility = if (filtered.isEmpty()) View.VISIBLE else View.GONE
     }
-    private fun updateallHabitsForDate(filtered: List<Habit>) {
+    private fun updateAllHabitsForDate(filtered: List<Habit>) {
         filteredallHabits.clear()
         // Sort: undone habits first, done habits last
         val sorted = filtered.sortedBy { it.isDone }
@@ -367,7 +350,6 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Cancel", null)
             .show()
     }
-    @SuppressLint("ScheduleExactAlarm")
     private fun saveHabitToFirebase(habit: Habit) {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         val db = FirebaseFirestore.getInstance()
@@ -376,57 +358,17 @@ class MainActivity : AppCompatActivity() {
         habit.id = docRef.id
 
         docRef.set(habit)
-            .addOnSuccessListener @androidx.annotation.RequiresPermission(android.Manifest.permission.SCHEDULE_EXACT_ALARM) {
-                scheduleHabitReminder(habit)
+            .addOnSuccessListener {
+                ReminderUtils.scheduleHabitReminder(this, habit)
                 Toast.makeText(this, "Habit added", Toast.LENGTH_SHORT).show()
             }
             .addOnFailureListener {
                 Toast.makeText(this, "Failed to add habit", Toast.LENGTH_SHORT).show()
             }
     }
-    @SuppressLint("ScheduleExactAlarm")
-    @RequiresPermission(Manifest.permission.SCHEDULE_EXACT_ALARM)
-    private fun scheduleHabitReminder(habit: Habit) {
-        if (!habit.hasReminder || habit.reminderTime.isEmpty()) return
-
-        val timeParts = habit.reminderTime.split(":")
-        val hour = timeParts[0].toInt()
-        val minute = timeParts[1].toInt()
-
-        val calendar = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, hour)
-            set(Calendar.MINUTE, minute)
-            set(Calendar.SECOND, 0)
-        }
-
-        val intent = Intent(this, ReminderReceiver::class.java).apply {
-            putExtra("habitName", habit.name)
-        }
-
-        val pendingIntent = PendingIntent.getBroadcast(
-            this,
-            habit.id.hashCode(),
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val alarmManager = getSystemService(ALARM_SERVICE) as AlarmManager
-        alarmManager.setExactAndAllowWhileIdle(
-            AlarmManager.RTC_WAKEUP,
-            calendar.timeInMillis,
-            pendingIntent
-        )
-//        alarmManager.setRepeating(
-//            AlarmManager.RTC_WAKEUP,
-//            calendar.timeInMillis,
-//            AlarmManager.INTERVAL_DAY,
-//            pendingIntent
-//        )
-    }
     private fun updateHabit(habit: Habit) {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         val db = FirebaseFirestore.getInstance()
-        // Ensure completionDates is always present
         if (habit.completionDates == null) {
             habit.completionDates = mutableListOf()
         }
@@ -435,9 +377,8 @@ class MainActivity : AppCompatActivity() {
             .collection("allHabits").document(habit.id)
             .set(habit)
             .addOnSuccessListener {
-                // After updating, re-fetch allHabits for the selected date
+                ReminderUtils.scheduleHabitReminder(this, habit)
                 selectedDateString?.let { dateStr ->
-                    // Find the CalendarDate for the selected string
                     val cal = Calendar.getInstance()
                     val date = try { dateFormat.parse(dateStr) } catch (e: Exception) { null }
                     if (date != null) {

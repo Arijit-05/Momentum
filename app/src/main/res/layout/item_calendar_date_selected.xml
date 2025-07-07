@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:paddingVertical="10dp"
+    android:paddingHorizontal="18dp"
+    android:orientation="vertical"
+    android:layout_marginStart="8dp"
+    android:gravity="center"
+    android:background="@drawable/date_item_bg_selected">
+
+    <TextView
+        android:id="@+id/tv_date"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/montserrat_bold"
+        android:textColor="@color/black"
+        android:textSize="18sp"
+        android:text="18" />
+
+    <TextView
+        android:id="@+id/tv_day"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/montserrat_regular"
+        android:textColor="@color/black"
+        android:textSize="12sp"
+        android:text="MON" />
+
+    <View
+        android:layout_width="6dp"
+        android:layout_height="6dp"
+        android:id="@+id/status_dot"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/dot_grey" />
+
+</LinearLayout>
