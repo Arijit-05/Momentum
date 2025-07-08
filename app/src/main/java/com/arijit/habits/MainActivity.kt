@@ -33,6 +33,7 @@ import com.arijit.habits.models.DateTaskStatus
 import com.arijit.habits.utils.ReminderUtils
 import android.content.pm.PackageManager
 import android.os.Build
+import android.widget.LinearLayout
 import androidx.core.app.ActivityCompat
 
 class MainActivity : AppCompatActivity() {
@@ -41,9 +42,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var finishedTasks: TextView
     private lateinit var totalTasks: TextView
     private lateinit var streakDay: TextView
+    private lateinit var streakBg: LinearLayout
     private lateinit var lottieFire: LottieAnimationView
     private lateinit var settings: ImageView
     private lateinit var addHabitBtn: CardView
+    private lateinit var aiBtn: CardView
     private val allHabits = mutableListOf<Habit>()
     private val filteredallHabits = mutableListOf<Habit>()
     private lateinit var habitAdapter: HabitAdapter
@@ -55,7 +58,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
-        // Request notification permission for Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1001)
@@ -73,6 +75,8 @@ class MainActivity : AppCompatActivity() {
         finishedTasks = findViewById(R.id.finished_tasks)
         totalTasks = findViewById(R.id.total_tasks)
         streakDay = findViewById(R.id.streak_day)
+        streakBg = findViewById(R.id.streak_bg)
+        aiBtn = findViewById(R.id.ai_btn)
         addHabitBtn = findViewById(R.id.add_habit_btn)
         settings = findViewById(R.id.settings)
         lottieFire = findViewById(R.id.lottie_fire)
@@ -91,6 +95,11 @@ class MainActivity : AppCompatActivity() {
             in 12..15 -> "Good afternoon 🌤️"
             in 16..20 -> "Good evening 🌆"
             else -> "Its late, get some rest 🌝"
+        }
+
+        aiBtn.setOnClickListener {
+            Vibration.vibrate(this, 100)
+            startActivity(Intent(this@MainActivity, AiActivity::class.java))
         }
 
         addHabitBtn.setOnClickListener {
@@ -118,6 +127,7 @@ class MainActivity : AppCompatActivity() {
         habitAdapter = HabitAdapter(
             filteredallHabits,
             onToggle = { habit ->
+                Vibration.vibrate(this, 50)
                 val dateStr = selectedDateString ?: dateFormat.format(Calendar.getInstance().time)
                 val todayStr = dateFormat.format(Calendar.getInstance().time)
 
@@ -127,7 +137,6 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 if (habit.completionDates.contains(dateStr)) {
-                    // Show confirmation dialog before undoing
                     AlertDialog.Builder(this)
                         .setTitle("Undo Habit")
                         .setMessage("Are you sure you want to undo this habit for today?")
@@ -277,24 +286,39 @@ class MainActivity : AppCompatActivity() {
         totalTasks.text = total.toString()
     }
     private fun updateStreak(calendarData: List<DateTaskStatus>) {
-        var streak = 0
         val today = dateFormat.format(Calendar.getInstance().time)
-        for (date in calendarData.reversed()) {
-            val dateString = dateFormat.format(date.date)
-            if (dateString > today) continue
+        var streak = 0
+        var foundIncomplete = false
+        // Find index of today in calendarData
+        val todayIndex = calendarData.indexOfLast { dateFormat.format(it.date) == today }
+        // Calculate streak up to yesterday
+        for (i in todayIndex - 1 downTo 0) {
+            val date = calendarData[i]
             val isComplete = date.totalTasks > 0 && date.finishedTasks == date.totalTasks
-            if (isComplete) streak++ else break
+            if (isComplete) {
+                streak++
+            } else {
+                foundIncomplete = true
+                break
+            }
+        }
+        // Check if today is also completed
+        if (todayIndex >= 0) {
+            val todayData = calendarData[todayIndex]
+            val isTodayComplete = todayData.totalTasks > 0 && todayData.finishedTasks == todayData.totalTasks
+            if (isTodayComplete) {
+                streak++
+            }
         }
         streakDay.text = streak.toString()
 
         if (streakDay.text.toString() == "0") {
-            findViewById<TextView>(R.id.days_txt).text = "days"
             lottieFire.pauseAnimation()
         } else if (streakDay.text.toString() == "1") {
-            findViewById<TextView>(R.id.days_txt).text = "day"
+            streakBg.setBackgroundResource(R.color.streak_yellow)
             lottieFire.resumeAnimation()
         } else {
-            findViewById<TextView>(R.id.days_txt).text = "days"
+            streakBg.setBackgroundResource(R.color.streak_yellow)
             lottieFire.resumeAnimation()
         }
     }
@@ -405,7 +429,7 @@ class MainActivity : AppCompatActivity() {
     private fun confirmDeleteHabit(habit: Habit) {
         AlertDialog.Builder(this)
             .setTitle("Delete Habit?")
-            .setMessage("Are you sure you want to delete this habit?")
+            .setMessage("Are you sure you want to delete this habit? Deleting this habit will delete all records for the past days")
             .setPositiveButton("Yes") { _, _ ->
                 deleteHabit(habit)
             }

@@ -18,6 +18,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Habits">
         <activity
+            android:name=".QuestionsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AiActivity"
+            android:exported="false" />
+        <activity
             android:name=".SettingsActivity"
             android:exported="false" />
         <activity
@@ -35,9 +41,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <receiver android:name=".utils.ReminderReceiver"
+
+        <receiver
+            android:name=".utils.ReminderReceiver"
             android:exported="false" />
-        <receiver android:name=".utils.BootReceiver"
+        <receiver
+            android:name=".utils.BootReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
