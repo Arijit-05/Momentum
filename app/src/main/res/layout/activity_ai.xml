@@ -26,10 +26,12 @@
         android:text="Powered by AI"
         android:textColor="@color/white" />
 
+    <!-- ANSWER CARD -->
     <androidx.cardview.widget.CardView
         android:id="@+id/questions_card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:visibility="visible"
         android:layout_below="@id/ai_txt"
         android:layout_marginHorizontal="18dp"
         android:layout_marginTop="10dp"
@@ -99,5 +101,15 @@
         </LinearLayout>
 
     </androidx.cardview.widget.CardView>
+
+    <!-- RESET BTN -->
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Reset"
+        android:fontFamily="@font/montserrat_regular"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="20dp"
+        android:id="@+id/reset" />
 
 </RelativeLayout>

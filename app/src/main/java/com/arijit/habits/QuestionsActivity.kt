@@ -1,5 +1,6 @@
 package com.arijit.habits
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.enableEdgeToEdge
@@ -12,6 +13,7 @@ import com.google.android.material.textfield.TextInputEditText
 import com.arijit.habits.utils.Vibration
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
+import com.arijit.habits.utils.StateManager
 
 class QuestionsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -198,9 +200,14 @@ class QuestionsActivity : AppCompatActivity() {
                 |I prefer doing my habits during $q3Text
                 |My bad habits are ${q4Texts.joinToString(", ")}
                 |I am currently a $q5Text
-                |Additionally, $anythingElse
+                |$anythingElse
             """.trimMargin()
             Log.d("Qnresult", result)
+            StateManager.triggerAi = true
+            val intent = Intent(this@QuestionsActivity, AiActivity::class.java)
+            intent.putExtra("result", result)
+            startActivity(intent)
+            finish()
         }
     }
 }
