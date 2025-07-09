@@ -5,13 +5,24 @@ import android.os.Bundle
 import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.cardview.widget.CardView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.arijit.habits.utils.Vibration
 import com.google.firebase.auth.FirebaseAuth
+import android.app.AlertDialog
+import android.content.ActivityNotFoundException
+import android.net.Uri
+import android.widget.EditText
+import android.widget.Toast
+import com.google.firebase.firestore.FirebaseFirestore
 
 class SettingsActivity : AppCompatActivity() {
-    private lateinit var logoutBtn: Button
+    private lateinit var logoutBtn: CardView
+    private lateinit var editName: CardView
+    private lateinit var github: CardView
+    private lateinit var projects: CardView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -25,10 +36,72 @@ class SettingsActivity : AppCompatActivity() {
         logoutBtn = findViewById(R.id.logout_btn)
         logoutBtn.setOnClickListener {
             Vibration.vibrate(this, 100)
-            FirebaseAuth.getInstance().signOut()
-            val intent = Intent(this, AuthenticationActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            startActivity(intent)
+            AlertDialog.Builder(this)
+                .setTitle("Log out")
+                .setMessage("Are you sure you want to log out?")
+                .setPositiveButton("Yes") { _, _ ->
+                    FirebaseAuth.getInstance().signOut()
+                    val intent = Intent(this, AuthenticationActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    startActivity(intent)
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+        }
+
+        editName = findViewById(R.id.edit_name)
+        editName.setOnClickListener {
+            Vibration.vibrate(this, 50)
+            val editText = EditText(this)
+            editText.hint = "Enter new name"
+            AlertDialog.Builder(this)
+                .setTitle("Edit Name")
+                .setView(editText)
+                .setPositiveButton("Save") { _, _ ->
+                    val newName = editText.text.toString().trim()
+                    if (newName.isEmpty()) {
+                        Toast.makeText(this, "Name cannot be empty", Toast.LENGTH_SHORT).show()
+                        return@setPositiveButton
+                    }
+                    val userId = FirebaseAuth.getInstance().currentUser?.uid
+                    if (userId != null) {
+                        FirebaseFirestore.getInstance().collection("users")
+                            .document(userId)
+                            .update("name", newName)
+                            .addOnSuccessListener {
+                                Toast.makeText(this, "Name updated", Toast.LENGTH_SHORT).show()
+                            }
+                            .addOnFailureListener {
+                                Toast.makeText(this, "Failed to update name", Toast.LENGTH_SHORT).show()
+                            }
+                    }
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+        }
+
+        github = findViewById(R.id.github)
+        github.setOnClickListener {
+            Vibration.vibrate(this, 50)
+            val url = "https://github.com/Arijit-05/Momentum"
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            try {
+                startActivity(intent)
+            } catch (e: ActivityNotFoundException) {
+                Toast.makeText(this, "No browser found to open link", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        projects = findViewById(R.id.projects)
+        projects.setOnClickListener {
+            Vibration.vibrate(this, 50)
+            val url = "https://arijit-05.github.io/website/"
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            try {
+                startActivity(intent)
+            } catch (e: ActivityNotFoundException) {
+                Toast.makeText(this, "No browser found to open link", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }
