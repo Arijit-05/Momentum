@@ -52,55 +52,57 @@ class AiActivity : AppCompatActivity() {
 
             val result: String = intent.getStringExtra("result") ?: ""
             Log.d("RecResult", result)
-
-            // Fetch API key from Firestore
-            FirebaseFirestore.getInstance()
-                .collection("config")
-                .document("openrouter")
-                .get()
-                .addOnSuccessListener { document ->
-                    val apiKey = document.getString("apiKey")
-                    if (apiKey.isNullOrEmpty()) {
-                        Log.e("MistralAI", "API key not found in Firestore")
-                        return@addOnSuccessListener
-                    }
-                    val retrofit = Retrofit.Builder()
-                        .baseUrl("https://openrouter.ai/api/")
-                        .addConverterFactory(GsonConverterFactory.create())
-                        .build()
-
-                    val api = retrofit.create(MistralApi::class.java)
-                    val userPrompt = result.trimIndent()
-
-                    val messages = listOf(
-                        Message(
-                            "system",
-                            "You are a helpful assistant that suggests useful, real-life daily habits. \n" +
-                                    "        Output should be **only a list of 5 habits**, each on a new line, \n" +
-                                    "        in the format: emoji + concise habit name (e.g. \uD83E\uDDD8\u200D♂\uFE0F Meditation).\n" +
-                                    "        Do NOT include numbering, titles, or any extra text.\n" +
-                                    "        These habits will be shown directly in a RecyclerView in an Android app."
-                        ),
-                        Message("user", userPrompt)
-                    )
-
-                    val request = MistralRequest(messages = messages)
-                    val authHeader = "Bearer $apiKey"
-                    api.getMistralResponse(authHeader, request).enqueue(object: Callback<MistralResponse> {
-                        override fun onResponse(call: Call<MistralResponse>, response: Response<MistralResponse>) {
-                            val reply = response.body()?.choices?.firstOrNull()?.message?.content
-                            Log.d("MistralAI", "AI Suggestion: $reply")
-                        }
-
-                        override fun onFailure(call: Call<MistralResponse>, t: Throwable) {
-                            Log.e("MistralAI", "Error: ${t.message}")
-                        }
-                    })
-                }
-                .addOnFailureListener { exception ->
-                    Log.e("MistralAI", "Failed to fetch API key: ${exception.message}")
-                }
+            getAiHabits(result)
         }
 
+    }
+
+    private fun getAiHabits(result: String) {
+        FirebaseFirestore.getInstance()
+            .collection("config")
+            .document("openrouter")
+            .get()
+            .addOnSuccessListener { document ->
+                val apiKey = document.getString("apiKey")
+                if (apiKey.isNullOrEmpty()) {
+                    Log.e("MistralAI", "API key not found in Firestore")
+                    return@addOnSuccessListener
+                }
+                val retrofit = Retrofit.Builder()
+                    .baseUrl("https://openrouter.ai/api/")
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build()
+
+                val api = retrofit.create(MistralApi::class.java)
+                val userPrompt = result.trimIndent()
+
+                val messages = listOf(
+                    Message(
+                        "system",
+                        "You are a helpful assistant that suggests useful, real-life daily habits. \n" +
+                                "        Output should be **only a list of 5 habits**, each on a new line, \n" +
+                                "        in the format: emoji + concise habit name (e.g. \uD83E\uDDD8\u200D♂\uFE0F Meditation).\n" +
+                                "        Do NOT include numbering, titles, or any extra text.\n" +
+                                "        These habits will be shown directly in a RecyclerView in an Android app."
+                    ),
+                    Message("user", userPrompt)
+                )
+
+                val request = MistralRequest(messages = messages)
+                val authHeader = "Bearer $apiKey"
+                api.getMistralResponse(authHeader, request).enqueue(object: Callback<MistralResponse> {
+                    override fun onResponse(call: Call<MistralResponse>, response: Response<MistralResponse>) {
+                        val reply = response.body()?.choices?.firstOrNull()?.message?.content
+                        Log.d("MistralAI", "AI Suggestion: $reply")
+                    }
+
+                    override fun onFailure(call: Call<MistralResponse>, t: Throwable) {
+                        Log.e("MistralAI", "Error: ${t.message}")
+                    }
+                })
+            }
+            .addOnFailureListener { exception ->
+                Log.e("MistralAI", "Failed to fetch API key: ${exception.message}")
+            }
     }
 }
