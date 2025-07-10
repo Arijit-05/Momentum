@@ -5,4 +5,5 @@
     <color name="dark_grey">#313131</color>
     <color name="streak_yellow">#fff4b2</color>
     <color name="streak_orange">#f64f2f</color>
+    <color name="gray">#494949</color>
 </resources>

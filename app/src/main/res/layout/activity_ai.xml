@@ -8,108 +8,201 @@
     android:background="@color/black"
     tools:context=".AiActivity">
 
-    <ImageView
-        android:id="@+id/img"
-        android:layout_width="250dp"
-        android:layout_height="90dp"
-        android:layout_marginTop="-5dp"
-        android:src="@drawable/momentum" />
-
-    <TextView
-        android:id="@+id/ai_txt"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/img"
-        android:layout_marginStart="18dp"
-        android:layout_marginTop="-25dp"
-        android:fontFamily="@font/montserrat_regular"
-        android:text="Powered by AI"
-        android:textColor="@color/white" />
-
-    <!-- ANSWER CARD -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/questions_card"
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:visibility="visible"
-        android:layout_below="@id/ai_txt"
-        android:layout_marginHorizontal="18dp"
-        android:layout_marginTop="10dp"
-        app:cardCornerRadius="20dp">
+        android:scrollbars="none">
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="15dp"
-            android:background="@color/white"
-            android:orientation="vertical">
+            android:layout_height="match_parent">
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <ImageView
+                android:id="@+id/img"
+                android:layout_width="250dp"
+                android:layout_height="90dp"
+                android:layout_marginTop="-5dp"
+                android:src="@drawable/momentum" />
+
+            <TextView
+                android:id="@+id/ai_txt"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@color/white"
-                android:orientation="horizontal"
-                android:weightSum="2">
+                android:layout_below="@id/img"
+                android:layout_marginStart="18dp"
+                android:layout_marginTop="-25dp"
+                android:fontFamily="@font/montserrat_regular"
+                android:text="Powered by AI"
+                android:textColor="@color/white" />
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="10dp"
-                    android:layout_weight="1.1"
-                    android:layout_marginTop="5dp"
-                    android:fontFamily="@font/montserrat_regular"
-                    android:text="Get your personalized habits, but first..."
-                    android:textColor="@color/black"
-                    android:textSize="22sp" />
-
-                <com.airbnb.lottie.LottieAnimationView
-                    android:layout_width="250dp"
-                    android:layout_height="150dp"
-                    android:layout_marginTop="-13dp"
-                    android:layout_weight="0.9"
-                    app:lottie_autoPlay="true"
-                    app:lottie_loop="true"
-                    app:lottie_rawRes="@raw/ai_robot" />
-
-            </LinearLayout>
-
+            <!-- ANSWER CARD -->
             <androidx.cardview.widget.CardView
+                android:id="@+id/questions_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="25dp"
-                android:id="@+id/answer_btn">
+                android:layout_below="@id/ai_txt"
+                android:layout_marginHorizontal="18dp"
+                android:layout_marginTop="10dp"
+                android:visibility="visible"
+                app:cardCornerRadius="20dp">
 
-                <RelativeLayout
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:padding="15dp"
-                    android:gravity="center"
-                    android:background="@color/black">
+                    android:background="@color/white"
+                    android:orientation="vertical"
+                    android:padding="15dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:fontFamily="@font/montserrat_regular"
-                        android:textColor="@color/white"
-                        android:textSize="16sp"
-                        android:text="Answer a few questions" />
+                        android:background="@color/white"
+                        android:orientation="horizontal"
+                        android:weightSum="2">
 
-                </RelativeLayout>
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
+                            android:layout_marginEnd="10dp"
+                            android:layout_weight="1.1"
+                            android:fontFamily="@font/montserrat_regular"
+                            android:text="Get your personalized habits, but first..."
+                            android:textColor="@color/black"
+                            android:textSize="22sp" />
+
+                        <com.airbnb.lottie.LottieAnimationView
+                            android:layout_width="250dp"
+                            android:layout_height="150dp"
+                            android:layout_marginTop="-13dp"
+                            android:layout_weight="0.9"
+                            app:lottie_autoPlay="true"
+                            app:lottie_loop="true"
+                            app:lottie_rawRes="@raw/ai_robot" />
+
+                    </LinearLayout>
+
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/answer_btn"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:cardCornerRadius="25dp">
+
+                        <RelativeLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@color/black"
+                            android:gravity="center"
+                            android:padding="15dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/montserrat_regular"
+                                android:text="Answer a few questions"
+                                android:textColor="@color/white"
+                                android:textSize="16sp" />
+
+                        </RelativeLayout>
+
+                    </androidx.cardview.widget.CardView>
+
+                </LinearLayout>
 
             </androidx.cardview.widget.CardView>
 
-        </LinearLayout>
+            <LinearLayout
+                android:id="@+id/reply_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/ai_txt"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginTop="10dp"
+                android:orientation="vertical"
+                android:visibility="gone">
 
-    </androidx.cardview.widget.CardView>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/montserrat_bold"
+                    android:text="AI Recommended Habits"
+                    android:textColor="@color/white"
+                    android:textSize="16sp" />
 
-    <!-- RESET BTN -->
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Reset"
-        android:fontFamily="@font/montserrat_regular"
-        android:layout_alignParentBottom="true"
-        android:layout_margin="20dp"
-        android:id="@+id/reset" />
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/ai_reply_rv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp" />
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/add_to_habits_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    app:cardCornerRadius="32dp">
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@color/white"
+                        android:gravity="center"
+                        android:paddingHorizontal="15dp"
+                        android:paddingVertical="18dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/montserrat_regular"
+                            android:text="Add to habits"
+                            android:textColor="@color/black"
+                            android:textSize="20sp" />
+
+                    </RelativeLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="5dp"
+                    android:fontFamily="@font/montserrat_regular"
+                    android:text="Or tap each habit to add them"
+                    android:textColor="@color/white"
+                    android:textSize="15sp" />
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/clear_btn"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="20dp"
+                    android:layout_marginTop="10dp"
+                    app:cardCornerRadius="25dp">
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@color/streak_yellow"
+                        android:gravity="center"
+                        android:padding="15dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/montserrat_regular"
+                            android:text="Clear all"
+                            android:textColor="@color/black"
+                            android:textSize="15sp" />
+
+                    </RelativeLayout>
+
+                </androidx.cardview.widget.CardView>
+
+            </LinearLayout>
+
+        </RelativeLayout>
+
+    </ScrollView>
 
 </RelativeLayout>
