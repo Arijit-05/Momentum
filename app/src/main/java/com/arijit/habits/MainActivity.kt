@@ -1,6 +1,8 @@
 package com.arijit.habits
 
 import android.app.TimePickerDialog
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -36,6 +38,8 @@ import android.os.Build
 import android.widget.LinearLayout
 import androidx.core.app.ActivityCompat
 import com.google.firebase.database.FirebaseDatabase
+import androidx.core.content.edit
+import com.arijit.habits.widgets.StreakWidget
 
 class MainActivity : AppCompatActivity() {
     private lateinit var titleTxt: TextView
@@ -56,6 +60,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var calendarAdapter: CalendarAdapter
     private val PREFS_NAME = "ai_settings_prefs"
     private val AI_SWITCH_KEY = "ai_switch_enabled"
+    private val STREAK_KEY = "current_streak"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -316,6 +321,16 @@ class MainActivity : AppCompatActivity() {
             }
         }
         streakDay.text = streak.toString()
+        saveStreakToPrefs(streak)
+        val intent = Intent(this, StreakWidget::class.java).apply {
+            action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+            val ids = AppWidgetManager.getInstance(this@MainActivity).getAppWidgetIds(
+                ComponentName(this@MainActivity, StreakWidget::class.java)
+            )
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
+        }
+        sendBroadcast(intent)
+
 
         if (streakDay.text.toString() == "0") {
             lottieFire.pauseAnimation()
@@ -326,6 +341,10 @@ class MainActivity : AppCompatActivity() {
             streakBg.setBackgroundResource(R.color.streak_yellow)
             lottieFire.resumeAnimation()
         }
+    }
+    private fun saveStreakToPrefs(streak: Int) {
+        val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        prefs.edit { putInt(STREAK_KEY, streak) }
     }
     private fun showAddHabitDialog() {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_habit, null)
