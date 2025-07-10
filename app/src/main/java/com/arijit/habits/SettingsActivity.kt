@@ -15,6 +15,7 @@ import android.content.ActivityNotFoundException
 import android.net.Uri
 import android.widget.EditText
 import android.widget.Toast
+import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.firebase.firestore.FirebaseFirestore
 
 class SettingsActivity : AppCompatActivity() {
@@ -22,6 +23,9 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var editName: CardView
     private lateinit var github: CardView
     private lateinit var projects: CardView
+    private lateinit var aiSwitch: MaterialSwitch
+    private val PREFS_NAME = "ai_settings_prefs"
+    private val AI_SWITCH_KEY = "ai_switch_enabled"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -103,5 +107,20 @@ class SettingsActivity : AppCompatActivity() {
                 Toast.makeText(this, "No browser found to open link", Toast.LENGTH_SHORT).show()
             }
         }
+
+        aiSwitch = findViewById(R.id.ai_switch)
+        aiSwitch.isChecked = loadAiSwitchState()
+        aiSwitch.setOnCheckedChangeListener { _, isChecked ->
+            saveAiSwitchState(isChecked)
+        }
+    }
+
+    private fun saveAiSwitchState(enabled: Boolean) {
+        val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        prefs.edit().putBoolean(AI_SWITCH_KEY, enabled).apply()
+    }
+    private fun loadAiSwitchState(): Boolean {
+        val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        return prefs.getBoolean(AI_SWITCH_KEY, true)
     }
 }

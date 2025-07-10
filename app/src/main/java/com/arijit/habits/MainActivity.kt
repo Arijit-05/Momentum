@@ -35,6 +35,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.widget.LinearLayout
 import androidx.core.app.ActivityCompat
+import com.google.firebase.database.FirebaseDatabase
 
 class MainActivity : AppCompatActivity() {
     private lateinit var titleTxt: TextView
@@ -53,6 +54,8 @@ class MainActivity : AppCompatActivity() {
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
     private var selectedDateString: String? = null
     private lateinit var calendarAdapter: CalendarAdapter
+    private val PREFS_NAME = "ai_settings_prefs"
+    private val AI_SWITCH_KEY = "ai_switch_enabled"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,6 +83,8 @@ class MainActivity : AppCompatActivity() {
         addHabitBtn = findViewById(R.id.add_habit_btn)
         settings = findViewById(R.id.settings)
         lottieFire = findViewById(R.id.lottie_fire)
+
+        FirebaseDatabase.getInstance().setPersistenceEnabled(true)
 
         FirebaseFirestore.getInstance().collection("users")
             .document(userId)
@@ -512,5 +517,18 @@ class MainActivity : AppCompatActivity() {
             }
             .setNegativeButton("Cancel", null)
             .show()
+    }
+    private fun loadAiSwitchState(): Boolean {
+        val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        return prefs.getBoolean(AI_SWITCH_KEY, true)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (loadAiSwitchState()) {
+            aiBtn.visibility = View.VISIBLE
+        } else {
+            aiBtn.visibility = View.GONE
+        }
     }
 }

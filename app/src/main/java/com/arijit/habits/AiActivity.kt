@@ -32,6 +32,8 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.arijit.habits.models.Habit
 import com.google.firebase.auth.FirebaseAuth
+import android.widget.TextView
+import com.airbnb.lottie.LottieAnimationView
 
 class AiActivity : AppCompatActivity() {
     private lateinit var questionsCard: CardView
@@ -43,7 +45,7 @@ class AiActivity : AppCompatActivity() {
     private var currentAiHabits: List<AiHabit> = emptyList()
     private val addedHabitKeys = mutableSetOf<String>()
     private var aiAdapter: AiHabitAdapter? = null
-
+    private lateinit var loading: LottieAnimationView
     private val PREFS_NAME = "ai_habits_prefs"
     private val HABITS_KEY = "ai_habits_list"
     private val ADDED_KEY = "added_ai_habits"
@@ -71,6 +73,7 @@ class AiActivity : AppCompatActivity() {
         aiReplyRv = findViewById(R.id.ai_reply_rv)
         addToHabits = findViewById(R.id.add_to_habits_card)
         clearBtn = findViewById(R.id.clear_btn)
+        loading = findViewById(R.id.loading)
 
         // Load added habit keys from prefs
         addedHabitKeys.clear()
@@ -173,6 +176,7 @@ class AiActivity : AppCompatActivity() {
     }
 
     private fun getAiHabits(result: String) {
+        loading.visibility = View.VISIBLE
         FirebaseFirestore.getInstance()
             .collection("config")
             .document("openrouter")
@@ -211,6 +215,7 @@ class AiActivity : AppCompatActivity() {
                             call: Call<MistralResponse>,
                             response: Response<MistralResponse>
                         ) {
+                            loading.visibility = View.GONE
                             val reply = response.body()?.choices?.firstOrNull()?.message?.content
                             Log.d("MistralAI", "AI Suggestion: $reply")
 
@@ -249,6 +254,7 @@ class AiActivity : AppCompatActivity() {
                         }
 
                         override fun onFailure(call: Call<MistralResponse>, t: Throwable) {
+                            loading.visibility = View.GONE
                             Toast.makeText(
                                 baseContext,
                                 "Error getting response ${t.message}",
@@ -259,6 +265,7 @@ class AiActivity : AppCompatActivity() {
                     })
             }
             .addOnFailureListener { exception ->
+                loading.visibility = View.GONE
                 Log.e("MistralAI", "Failed to fetch API key: ${exception.message}")
             }
     }

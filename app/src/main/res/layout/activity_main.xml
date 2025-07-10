@@ -275,6 +275,7 @@
         android:id="@+id/ai_btn"
         android:layout_width="50dp"
         android:layout_height="50dp"
+        android:visibility="gone"
         android:layout_above="@id/add_habit_btn"
         android:layout_alignParentEnd="true"
         android:layout_marginEnd="20dp"
