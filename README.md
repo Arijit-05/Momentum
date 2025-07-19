@@ -1,4 +1,4 @@
-# Momentum
+# Momentum 🔥
 
 Momentum is a simple, beautiful habit-tracking app for Android. Build positive routines, track your progress, and stay motivated with streaks and reminders.
 
@@ -15,7 +15,22 @@ Momentum is a simple, beautiful habit-tracking app for Android. Build positive r
 
 ## Screenshots
 
-> _Add screenshots of your app here!_
+<table>
+  <tr>
+      <td><img src="https://github.com/user-attachments/assets/42594889-e533-494e-80ff-d08c403980d0" width="200"></td>
+    <td><img src="https://github.com/user-attachments/assets/1acfcbc5-3031-4f0f-8cc9-3ee7399b1db9" width="200"></td>
+    <td><img src="https://github.com/user-attachments/assets/11dba4f3-7665-4fd7-a1f9-00854b75146b" width="200"></td>
+  </tr>
+  <tr>
+    <td><img src="https://github.com/user-attachments/assets/8590fec3-1086-47be-8549-118be8dc8828" width="200"></td>
+    <td><img src="https://github.com/user-attachments/assets/6f140309-54f0-4c9b-b9ad-803021a7a644" width="200"></td>
+    <td><img src="https://github.com/user-attachments/assets/796214ad-85af-4e93-ac91-4fe87e0daee1" width="200"></td>
+    
+  </tr>
+</table>
+
+---
+## More features will be added to Momentum+ soon
 
 ## Installation
 
@@ -64,12 +79,8 @@ app/
 
 Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
 
-## Credits
-
-- App icon and graphics by [your name or source]
-- AI powered by [Mistral](https://mistral.ai/)
-- Built with ❤️ by [your name]
+## Built with ❤️ by Arijit
 
 ## License
 
-[MIT](LICENSE) (or specify your license) 
+[MIT](LICENSE)
